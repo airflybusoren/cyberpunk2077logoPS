@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Title</title>
+	<meta name="description" content="" />
+	<meta name="keywords" content="" />
+	<meta name="author" content="" />
+
+<!-- 新 Bootstrap 核心 CSS 文件 -->
+<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+ 
+<!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+ 
+<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+</head>
+<style>
+	.clip{
+		display: none !important;
+	}
+	body{
+		text-align: center;
+	}
+	div{
+		margin: 0 auto;
+	}
+	body div,img{
+		display: block;
+	}
+	img{
+		margin:0 auto;
+	}
+	#logo,#imgCover{
+		display: none;
+	}
+	/*#imgshow,#logo{
+		position: relative;
+	}*/
+	#logo{
+		position: absolute;
+	}
+</style>
+<body>
+	<div>
+		<div id="imgshow" >
+			<img id="logo" src="./Cyberpunk2077.png" alt="" crossOrigin="*" draggable='false'>
+		</div>
+		<p id="event"></p>
+		<input type="file" id="uploadFile" class="clip" accept="image/*">
+		<label class="btn btn-default" for="uploadFile">选择图片</label>
+		<label class="btn btn-default" id="save">保存图片</label>
+		<p>
+			<img id="imgCover" src="" crossOrigin="*">
+		</p>
+		<p id="imgUploadX"></p>
+		<canvas id="canvas" ></canvas>
+	</div>
+<script>
+	var eleUploadFile = document.getElementById('uploadFile');
+	var eleImgCover = document.getElementById('imgCover');
+	var eleImgUploadX = document.getElementById('imgUploadX');
+	var logo = document.getElementById('logo');
+	var saveimg = document.getElementById('save');
+	var canvas = document.getElementById('canvas');
+	var imgshow = document.getElementById('imgshow');
+    var isDrag=false;//是否开始拖拽 false 不拖拽
+    var disX,disY;//图片相对于图片的位置
+    var imgwidth;//上传图片宽度
+    var imgheight;//上传图片高度
+    var bodywidth//可视区域宽度
+	var bodyeight//可视区域高度
+	var minimgwidth; //图片最小宽度
+	var maximgwidth;//图片最大宽度
+	var minimgheight; //图片最小宽度
+	var maximgheight;//图片最大宽度
+	var logowidth; //logo宽度
+	var logoheight; //logo高度
+	eleUploadFile.addEventListener('change', function (event) {
+        var reader = new FileReader();
+        var file = event.target.files[0] || event.dataTransfer.files[0];
+        reader.onload = function(e) {
+          var base64 = e.target.result;
+          if (base64.length > 1024 * 50) {
+              alert('图片尺寸请小于50K');
+              return;
+          } else {
+          		// console.log(base64);
+              // 使用canvas合成图片，并base64化
+              	$(eleImgCover).attr({'src':base64})
+              	// var context = canvas.getContext('2d');
+              	dataURL='';
+              	var imgUpload = new Image();
+              	// imgUpload.setAttribute("crossOrigin",'Anonymous');
+        		imgUpload.onload = function () {
+        			imgheight=height=imgUpload.height;
+        			imgwidth=width=imgUpload.width;
+        			// $(canvas).attr({'width':width});
+        			// $(canvas).attr({'height':height});
+        			$(imgshow).css({'width':width,'height':height,'background-image': 'url('+base64+')'});
+        			initialize_img()
+
+        			// context.drawImage(imgCover,0,0);
+        			// context.drawImage(logo,20,20);
+        			// var dataURL    = canvas.toDataURL("image/png");  
+	          //       var w=window.open('about:blank','image from canvas');  
+	          //       w.document.write("<img src='"+dataURL+"' alt='from canvas'/>");  
+        		}
+        		
+        		imgUpload.src = base64;
+        		
+          }
+        };
+        reader.readAsDataURL(file);
+	});
+
+	//初始化图片移动功能
+	function initialize_img () {
+		$(logo).show();
+		bodyheight=document.body.offsetHeight;
+		bodywidth=document.body.offsetWidth;
+		minimgwidth=(bodywidth-imgwidth)/2;
+		maximgwidth=minimgwidth+imgwidth;
+		minimgheight=0;
+		maximgheight=imgheight;
+		var logoimg = new Image();
+		logoimg.onload = function () {
+			logowidth=logoimg.width;
+			logoheight=logoimg.height;
+		}
+		logoimg.src = logo.src;	
+	}
+
+	saveimg.onclick=function(){
+		$(canvas).attr({'width':imgwidth});
+		$(canvas).attr({'height':imgheight});
+		var context = canvas.getContext('2d');
+		context.drawImage(imgCover,0,0);
+		var logo_style_left=logo.style.left;
+		var logo_style_top=logo.style.top;
+		sx=logo_style_left.substring(0,logo_style_left.length-2)-minimgwidth;
+		sy=logo_style_top.substring(0,logo_style_top.length-2);
+		context.drawImage(logo,sx,sy);
+		var dataURL    = canvas.toDataURL("image/png");
+		setdownload(dataURL) ;//触发下载
+        // var w=window.open('about:blank','image from canvas');  
+        // w.document.write("<img width='"+imgwidth+"' height='"+imgheight+"' src='"+dataURL+"' alt='from canvas'/>"); 
+
+	}
+
+	function setdownload (url) {
+		var a = document.createElement('a');
+		var event = new MouseEvent('click');
+		a.download = 'img';
+		a.href = url
+        // 触发a的单击事件
+        a.dispatchEvent(event)
+	}
+
+    //鼠标按下时
+    logo.onmousedown=function(e){
+        isDrag=true;
+        this.style.cursor='move';
+        e=e||window.event;//兼容性写法
+        //鼠标位置
+        var x=e.clientX;
+        var y=e.clientY;
+        //鼠标相对于图片的位置
+        disX=x-this.offsetLeft;
+        disY=y-this.offsetTop;
+        // console.log("x:"+x);
+        // console.log("y:"+y);
+        // console.log("disY:"+disY);
+        // console.log("disX:"+disX);
+        // console.log("this.offsetLeft:"+this.offsetLeft);
+        // console.log("this.offsetTop:"+this.offsetTop);
+    }
+
+    //鼠标移动时
+    document.onmousemove=function(e){
+      if(!isDrag){
+        return;
+      }
+      e=e||window.event;//兼容性写法
+      //鼠标位置
+      var x=e.clientX;
+      var y=e.clientY;
+      //判断是否在图片内
+      // var widthright=logowidth-disX;
+      if ((minimgwidth+disX)>x || (maximgwidth-logowidth+disX)<x) {
+      	return;
+      };
+      if ((minimgheight+disY)>y || (maximgheight-logoheight+disY)<y) {
+      	return;
+      };
+      //修改图片位置
+      logo.style.left=x-disX+'px';
+      logo.style.top=y-disY+'px';
+    }
+    //鼠标抬起时
+    document.onmouseup=function(){
+        isDrag=false;
+        logo.style.cursor='default';
+       
+    }
+ 
+
+  	// var id = document.getElementById('event');
+   //  document.addEventListener('mousemove',function(e){
+   //      // id.style.marginLeft = e.clientX + 'px';
+   //      // id.style.marginTop = e.clientY + 'px';
+   //      id.innerHTML = "(X:" + e.clientX+",Y:"+e.clientY+ ")";
+   //  });
+
+
+
+</script>
+</body>
+</html>
