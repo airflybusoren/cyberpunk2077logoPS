@@ -52,6 +52,8 @@
 		<input type="file" id="uploadFile" class="clip" accept="image/*">
 		<label class="btn btn-default" for="uploadFile">选择图片</label>
 		<label class="btn btn-default" id="save">保存图片</label>
+		<br>
+		<label for="">请先上传图片,点击logo可以移动,滚动调整大小</label>
 		<p>
 			<img id="imgCover" src="" crossOrigin="*">
 		</p>
@@ -78,27 +80,25 @@
 	var maximgheight;//图片最大宽度
 	var logowidth; //logo宽度
 	var logoheight; //logo高度
+	var zoomVal=1; //logo的默认大小
 	eleUploadFile.addEventListener('change', function (event) {
         var reader = new FileReader();
         var file = event.target.files[0] || event.dataTransfer.files[0];
         reader.onload = function(e) {
           var base64 = e.target.result;
-          if (base64.length > 1024 * 50) {
-              alert('图片尺寸请小于50K');
+          if (base64.length > 1024 * 1024) {
+              alert('图片尺寸请小于1m');
               return;
           } else {
-          		// console.log(base64);
               // 使用canvas合成图片，并base64化
               	$(eleImgCover).attr({'src':base64})
-              	// var context = canvas.getContext('2d');
               	dataURL='';
               	var imgUpload = new Image();
               	// imgUpload.setAttribute("crossOrigin",'Anonymous');
         		imgUpload.onload = function () {
         			imgheight=height=imgUpload.height;
         			imgwidth=width=imgUpload.width;
-        			// $(canvas).attr({'width':width});
-        			// $(canvas).attr({'height':height});
+
         			$(imgshow).css({'width':width,'height':height,'background-image': 'url('+base64+')'});
         			initialize_img()
 
@@ -125,12 +125,7 @@
 		maximgwidth=minimgwidth+imgwidth;
 		minimgheight=0;
 		maximgheight=imgheight;
-		var logoimg = new Image();
-		logoimg.onload = function () {
-			logowidth=logoimg.width;
-			logoheight=logoimg.height;
-		}
-		logoimg.src = logo.src;	
+
 	}
 
 	saveimg.onclick=function(){
@@ -142,7 +137,7 @@
 		var logo_style_top=logo.style.top;
 		sx=logo_style_left.substring(0,logo_style_left.length-2)-minimgwidth;
 		sy=logo_style_top.substring(0,logo_style_top.length-2);
-		context.drawImage(logo,sx,sy);
+		context.drawImage(logo,sx,sy,logo.clientWidth,logo.clientHeight);
 		var dataURL    = canvas.toDataURL("image/png");
 		setdownload(dataURL) ;//触发下载
         // var w=window.open('about:blank','image from canvas');  
@@ -189,10 +184,10 @@
       var y=e.clientY;
       //判断是否在图片内
       // var widthright=logowidth-disX;
-      if ((minimgwidth+disX)>x || (maximgwidth-logowidth+disX)<x) {
+      if ((minimgwidth+disX)>x || (maximgwidth-logo.clientWidth+disX)<x) {
       	return;
       };
-      if ((minimgheight+disY)>y || (maximgheight-logoheight+disY)<y) {
+      if ((minimgheight+disY)>y || (maximgheight-logo.clientHeight+disY)<y) {
       	return;
       };
       //修改图片位置
@@ -205,7 +200,35 @@
         logo.style.cursor='default';
        
     }
- 
+
+    //图片放大缩小
+ 	imgshow.onmousewheel=function(e){
+ 		
+	    zoomVal+=(event.wheelDelta/120)*5;
+	    if (zoomVal >= 240) {
+	      logo.style.width=zoomVal+"px";
+	      return false;
+	    } else {
+	      zoomVal=240;
+	      logo.style.width=zoomVal+"px";
+	      return false;
+	    }
+ 	}
+  //   //图片放大缩小
+ 	// imgshow.onmousewheel=function(e){
+ 		
+	 //    zoomVal+=event.wheelDelta/1200;
+	 //    console.log(event.wheelDelta);
+	 //    console.log(zoomVal);
+	 //    if (zoomVal >= 0.2) {
+	 //      logo.style.transform="scale("+zoomVal+")";
+	 //      return false;
+	 //    } else {
+	 //      zoomVal=0.2;
+	 //      logo.style.transform="scale("+zoomVal+")";
+	 //      return false;
+	 //    }
+ 	// }
 
   	// var id = document.getElementById('event');
    //  document.addEventListener('mousemove',function(e){
